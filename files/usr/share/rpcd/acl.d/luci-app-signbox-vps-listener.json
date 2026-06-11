@@ -6,7 +6,8 @@
 			"file": {
 				"/var/run/signbox-vps-listener/last_status.json": [ "read" ],
 				"/usr/libexec/signbox-vps-listener/test-vps.sh": [ "exec" ],
-				"/usr/libexec/signbox-vps-listener/test-telegram.sh": [ "exec" ]
+				"/usr/libexec/signbox-vps-listener/test-telegram.sh": [ "exec" ],
+				"/usr/libexec/signbox-vps-listener/read-logs.sh": [ "exec" ]
 			}
 		},
 		"write": {

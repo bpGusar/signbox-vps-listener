@@ -3,6 +3,12 @@
 'require form';
 'require fs';
 'require ui';
+'require poll';
+
+var LOG_POLL_KEY = 'signbox-vps-listener.log_autorefresh';
+var LOG_SCRIPT = '/usr/libexec/signbox-vps-listener/read-logs.sh';
+var LOG_LINES = '200';
+var LOG_POLL_INTERVAL = 2;
 
 function showTestResult(res) {
 	var msg = (res.stdout || res.stderr || '').trim();
@@ -23,18 +29,87 @@ function runTest(script) {
 	});
 }
 
+function fetchLogs() {
+	return fs.exec(LOG_SCRIPT, [ LOG_LINES ]).then(function(res) {
+		return (res.stdout || '').trim();
+	});
+}
+
+function isAutoRefreshEnabled() {
+	try {
+		var v = localStorage.getItem(LOG_POLL_KEY);
+		return v === null || v === '1';
+	} catch (e) {
+		return true;
+	}
+}
+
+function setAutoRefreshEnabled(enabled) {
+	try {
+		localStorage.setItem(LOG_POLL_KEY, enabled ? '1' : '0');
+	} catch (e) {}
+}
+
 return view.extend({
 	load: function() {
-		return L.resolveDefault(
-			fs.read('/var/run/signbox-vps-listener/last_status.json'),
-			null
-		).then(function(data) {
-			this.lastStatus = data;
+		return Promise.all([
+			L.resolveDefault(
+				fs.read('/var/run/signbox-vps-listener/last_status.json'),
+				null
+			),
+			fetchLogs()
+		]).then(function(results) {
+			this.lastStatus = results[0];
+			this.logText = results[1];
 		}.bind(this));
 	},
 
+	updateLogField: function(logOption, text) {
+		if (!logOption)
+			return;
+
+		var ui = logOption.getUIElement && logOption.getUIElement();
+		if (ui && ui.setValue)
+			ui.setValue(text || _('(no log entries yet)'));
+	},
+
+	refreshLogs: function(logOption) {
+		return fetchLogs().then(L.bind(function(text) {
+			this.logText = text;
+			this.updateLogField(logOption, text);
+		}, this)).catch(function(err) {
+			ui.addNotification(null, E('p', err.message || String(err)), 'error');
+		});
+	},
+
+	setupLogAutoRefresh: function(logOption, autoRefreshOption) {
+		var autoUi = autoRefreshOption.getUIElement && autoRefreshOption.getUIElement();
+
+		if (autoUi) {
+			autoUi.setValue(isAutoRefreshEnabled() ? '1' : '0');
+
+			if (autoUi.node) {
+				autoUi.node.addEventListener('change', function() {
+					setAutoRefreshEnabled(autoUi.getValue() === '1');
+				});
+			}
+		}
+
+		this.logPollId = poll.add(L.bind(function() {
+			if (!isAutoRefreshEnabled())
+				return;
+
+			return this.refreshLogs(logOption);
+		}, this), LOG_POLL_INTERVAL);
+	},
+
+	remove: function() {
+		if (this.logPollId)
+			poll.remove(this.logPollId);
+	},
+
 	render: function() {
-		var m, s, o, statusText;
+		var m, s, o, statusText, logOption, autoRefreshOption;
 
 		if (this.lastStatus) {
 			try {
@@ -111,6 +186,34 @@ return view.extend({
 		o.rawhtml = true;
 		o.default = statusText.replace(/\n/g, '<br />');
 
-		return m.render();
+		s = m.section(form.NamedSection, 'main', 'signbox-vps-listener', _('Logs'));
+
+		logOption = s.option(form.TextValue, '_log_view', _('Recent entries'));
+		logOption.rows = 18;
+		logOption.readonly = true;
+		logOption.default = this.logText || _('(no log entries yet)');
+		logOption.description = _('Last 200 lines from the configured log file path.');
+
+		autoRefreshOption = s.option(form.Flag, '_auto_refresh_logs', _('Auto-refresh every 2 seconds'));
+		autoRefreshOption.default = isAutoRefreshEnabled() ? '1' : '0';
+		autoRefreshOption.rmempty = true;
+		autoRefreshOption.optional = true;
+		autoRefreshOption.write = function() { return true; };
+		autoRefreshOption.remove = function() { return true; };
+		autoRefreshOption.cfgvalue = function() {
+			return isAutoRefreshEnabled() ? '1' : '0';
+		};
+
+		o = s.option(form.Button, '_refresh_logs', _('Refresh logs'));
+		o.inputtitle = _('Refresh');
+		o.inputstyle = 'apply';
+		o.onclick = L.bind(function() {
+			return this.refreshLogs(logOption);
+		}, this);
+
+		return m.render().then(L.bind(function(nodes) {
+			this.setupLogAutoRefresh(logOption, autoRefreshOption);
+			return nodes;
+		}, this));
 	}
 });
