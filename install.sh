@@ -108,8 +108,7 @@ mkdir -p /usr/share/rpcd/acl.d
 cp -a "$FILES_DIR/usr/share/rpcd/acl.d/luci-app-signbox-vps-listener.json" /usr/share/rpcd/acl.d/
 
 mkdir -p /www/luci-static/resources/view/signbox-vps-listener
-cp -a "$FILES_DIR/htdocs/luci-static/resources/view/signbox-vps-listener/config.js \
-	/www/luci-static/resources/view/signbox-vps-listener/
+cp -a "$FILES_DIR/htdocs/luci-static/resources/view/signbox-vps-listener/config.js" /www/luci-static/resources/view/signbox-vps-listener/
 
 if [ "$FIRST_INSTALL" = "1" ]; then
 	cp -a "$FILES_DIR/etc/config/signbox-vps-listener" /etc/config/
