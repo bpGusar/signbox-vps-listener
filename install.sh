@@ -67,14 +67,18 @@ else
 	TMPDIR="$(mktemp -d /tmp/signbox-vps-listener.XXXXXX)"
 	echo "Downloading ${REPO_URL} (${BRANCH})..."
 	if command -v curl >/dev/null 2>&1; then
-		curl -sfL "${REPO_URL}/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz -C "$TMPDIR" --strip-components=1
+		curl -sfL "${REPO_URL}/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz -C "$TMPDIR"
 	elif command -v wget >/dev/null 2>&1; then
-		wget -qO- "${REPO_URL}/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz -C "$TMPDIR" --strip-components=1
+		wget -qO- "${REPO_URL}/archive/refs/heads/${BRANCH}.tar.gz" | tar -xz -C "$TMPDIR"
 	else
 		echo "curl or wget required" >&2
 		exit 1
 	fi
-	FILES_DIR="${TMPDIR}/files"
+	EXTRACTED=""
+	for d in "$TMPDIR"/*; do
+		[ -d "$d" ] && EXTRACTED="$d" && break
+	done
+	FILES_DIR="${EXTRACTED}/files"
 fi
 
 if [ ! -d "$FILES_DIR" ]; then
