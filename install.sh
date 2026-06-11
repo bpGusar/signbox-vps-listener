@@ -136,7 +136,9 @@ grant_acl
 
 /etc/init.d/rpcd reload 2>/dev/null || true
 /etc/init.d/signbox-vps-listener enable
-/etc/init.d/signbox-vps-listener restart
+if [ "$(uci -q get signbox-vps-listener.main.enabled)" = "1" ]; then
+	/etc/init.d/signbox-vps-listener restart 2>/dev/null || /etc/init.d/signbox-vps-listener start
+fi
 
 rm -rf /tmp/luci-*
 
