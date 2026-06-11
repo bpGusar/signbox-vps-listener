@@ -1,0 +1,10 @@
+{
+	"admin/services/signbox-vps-listener": {
+		"title": "Signbox VPS Listener",
+		"order": 90,
+		"action": {
+			"type": "view",
+			"path": "signbox-vps-listener/config"
+		}
+	}
+}

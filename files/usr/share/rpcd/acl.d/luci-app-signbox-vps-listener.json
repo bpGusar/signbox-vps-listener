@@ -1,0 +1,16 @@
+{
+	"luci-app-signbox-vps-listener": {
+		"description": "Grant access to Signbox VPS Listener configuration",
+		"read": {
+			"uci": [ "signbox-vps-listener" ],
+			"file": {
+				"/var/run/signbox-vps-listener/last_status.json": [ "read" ],
+				"/usr/libexec/signbox-vps-listener/test-vps.sh": [ "exec" ],
+				"/usr/libexec/signbox-vps-listener/test-telegram.sh": [ "exec" ]
+			}
+		},
+		"write": {
+			"uci": [ "signbox-vps-listener" ]
+		}
+	}
+}

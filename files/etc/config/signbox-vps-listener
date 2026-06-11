@@ -1,0 +1,8 @@
+config signbox-vps-listener 'main'
+	option enabled '0'
+	option vps_url 'https://vps.example/v1/stream'
+	option vps_token ''
+	option download_dir '/etc/signbox'
+	option log_file '/var/log/signbox-vps-listener.log'
+	option telegram_bot_token ''
+	list post_action '/etc/init.d/podkop restart'

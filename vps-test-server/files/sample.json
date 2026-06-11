@@ -1,0 +1,5 @@
+{
+  "test": true,
+  "source": "vps-test-server",
+  "note": "Sample config for deploy pipeline test"
+}

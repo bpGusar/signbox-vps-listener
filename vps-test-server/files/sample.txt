@@ -1,0 +1,5 @@
+# signbox-vps-listener test file
+# If you see this on the router, download works.
+
+deployed_at=TEST
+message=hello from vps-test-server
