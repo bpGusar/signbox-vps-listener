@@ -68,7 +68,7 @@ return view.extend({
 		if (!logOption)
 			return;
 
-		var ui = logOption.getUIElement && logOption.getUIElement();
+		var ui = logOption.getUIElement('main');
 		if (ui && ui.setValue)
 			ui.setValue(text || _('(no log entries yet)'));
 	},
@@ -83,7 +83,7 @@ return view.extend({
 	},
 
 	setupLogAutoRefresh: function(logOption, autoRefreshOption) {
-		var autoUi = autoRefreshOption.getUIElement && autoRefreshOption.getUIElement();
+		var autoUi = autoRefreshOption.getUIElement('main');
 
 		if (autoUi) {
 			autoUi.setValue(isAutoRefreshEnabled() ? '1' : '0');
@@ -95,17 +95,19 @@ return view.extend({
 			}
 		}
 
-		this.logPollId = poll.add(L.bind(function() {
+		this.logPollFn = L.bind(function() {
 			if (!isAutoRefreshEnabled())
 				return;
 
 			return this.refreshLogs(logOption);
-		}, this), LOG_POLL_INTERVAL);
+		}, this);
+
+		poll.add(this.logPollFn, LOG_POLL_INTERVAL);
 	},
 
 	remove: function() {
-		if (this.logPollId)
-			poll.remove(this.logPollId);
+		if (this.logPollFn)
+			poll.remove(this.logPollFn);
 	},
 
 	render: function() {
