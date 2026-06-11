@@ -8,22 +8,17 @@ if [ -z "$VPS_URL" ]; then
 	exit 1
 fi
 
-if curl -sfN --connect-timeout 10 --max-time 8 \
+# SSE keeps the connection open; read headers and bail after a few seconds.
+# curl exits 28 on --max-time even after HTTP 200, so do not use -f or || HTTP_CODE=000.
+HTTP_CODE="$(curl --connect-timeout 10 --max-time 5 \
 	-H "Authorization: Bearer ${VPS_TOKEN}" \
 	-H "Accept: text/event-stream" \
-	"$VPS_URL" -o /dev/null 2>/dev/null; then
-	echo "OK: VPS SSE stream is reachable"
-	exit 0
-fi
-
-HTTP_CODE="$(curl -sf --connect-timeout 10 --max-time 15 \
-	-H "Authorization: Bearer ${VPS_TOKEN}" \
-	-H "Accept: text/event-stream" \
-	-o /dev/null -w '%{http_code}' "$VPS_URL" 2>/dev/null)" || HTTP_CODE="000"
+	-o /dev/null -w '%{http_code}' \
+	"$VPS_URL" 2>/dev/null)" || true
 
 case "$HTTP_CODE" in
 	200|204)
-		echo "OK: VPS responded with HTTP ${HTTP_CODE}"
+		echo "OK: VPS SSE stream is reachable (HTTP ${HTTP_CODE})"
 		exit 0
 		;;
 	401|403)
