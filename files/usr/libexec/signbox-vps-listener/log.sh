@@ -1,16 +1,17 @@
 #!/bin/sh
-# Usage: read-logs.sh [lines]
+# Usage: log.sh <message>
+# Write to log file only (no Telegram).
 
-LINES="${1:-200}"
 LIBEXEC="/usr/libexec/signbox-vps-listener"
-
 LOG_FILE="$("$LIBEXEC/ensure-log-file.sh" 2>/dev/null)" || {
 	LOG_FILE="$(uci -q get signbox-vps-listener.main.log_file)"
 	LOG_FILE="${LOG_FILE:-/var/log/signbox-vps-listener.log}"
-	printf 'Cannot access log file: %s\n' "$LOG_FILE"
-	exit 0
+	LOG_DIR="$(dirname "$LOG_FILE")"
+	mkdir -p "$LOG_DIR" 2>/dev/null
 }
 
-[ -s "$LOG_FILE" ] || exit 0
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 
-tail -n "$LINES" "$LOG_FILE"
+printf '[%s] %s\n' "$TIMESTAMP" "$1" >> "$LOG_FILE"
+
+exit 0

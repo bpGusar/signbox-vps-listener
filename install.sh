@@ -118,6 +118,13 @@ fi
 
 chmod 600 /etc/config/signbox-vps-listener 2>/dev/null || true
 
+/usr/libexec/signbox-vps-listener/ensure-log-file.sh >/dev/null 2>&1 || {
+	LOG_FILE="$(uci -q get signbox-vps-listener.main.log_file 2>/dev/null)"
+	LOG_FILE="${LOG_FILE:-/var/log/signbox-vps-listener.log}"
+	mkdir -p "$(dirname "$LOG_FILE")" 2>/dev/null || true
+	touch "$LOG_FILE" 2>/dev/null || true
+}
+
 grant_acl() {
 	local idx=0 login
 
